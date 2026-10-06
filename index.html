@@ -98,19 +98,20 @@ function calc(){
    const requiredStart=new Date(target.getTime()-durationMs);
    required.textContent=fmt(requiredStart);
 
-   const diff=requiredStart.getTime()-now.getTime();
-   const s=Math.max(0,Math.floor(diff/1000));
+const diff = requiredStart.getTime() - now.getTime();
+const s = Math.max(0, Math.floor(diff / 1000));
 
-   until.textContent=`${Math.floor(s/86400)}d ${Math.floor((s%86400)/3600)}h ${Math.floor((s%3600)/60)}m ${s%60}s`;
+until.textContent =
+`${Math.floor(s/86400)}d ${Math.floor((s%86400)/3600)}h ${Math.floor((s%3600)/60)}m ${s%60}s`;
 
-   if(s===0){
-      status.style.display="block";
-      status.textContent="🚀 START NOW";
-      status.style.background="#22C55E";
-      status.style.color="#04150A";
-   }else{
-      status.style.display="none";
-   }
+if (diff <= 0) {
+   status.style.display = "block";
+   status.textContent = "🚀 START NOW";
+   status.style.background = "#22C55E";
+   status.style.color = "#04150A";
+} else {
+   status.style.display = "none";
+}
  }
 }
 
