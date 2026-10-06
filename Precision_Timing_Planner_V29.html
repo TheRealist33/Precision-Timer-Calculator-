@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Precision Timing Planner V29</title>
+<style>
+body{margin:0;padding:20px;background:#0f172a;color:white;font-family:Arial,sans-serif}
+.wrap{max-width:1200px;margin:auto}
+.card,.banner{background:#102A43;border:2px solid #7DD3FC;border-radius:20px;padding:16px;margin-bottom:16px}
+.banner{text-align:center}
+.top,.results{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.results{grid-template-columns:1fr 1fr}
+.topbox,.panel{background:#0F172A;border-radius:16px;padding:12px}
+.compactGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.compactControls{display:flex;justify-content:center;gap:6px}
+.miniBtn{width:42px;height:42px;border:none;border-radius:10px;background:#1E40AF;color:#fff;font-size:22px;cursor:pointer}
+.miniInput{width:70px;height:42px;text-align:center;background:#0F172A;color:#22C55E;border:none;border-radius:10px;font-size:18px}
+.toggle{text-align:center;margin:12px 0}
+.toggle button{padding:10px 16px;margin:0 4px;border:none;border-radius:10px;cursor:pointer}
+.active{background:#38BDF8}
+.inactive{background:#334155;color:white}
+.status{margin-top:12px;padding:16px;border-radius:12px;text-align:center;font-weight:bold;font-size:28px;display:none}
+#landingDate,#landingTime{width:100%;height:56px;font-size:18px;padding:10px;border-radius:10px;border:none;margin-bottom:8px;cursor:pointer}
+.quickBtn{padding:10px 16px;border:none;border-radius:10px;background:#1E40AF;color:white;cursor:pointer;margin-right:6px;font-weight:bold}
+@media(max-width:850px){.top,.results{grid-template-columns:1fr}.compactGrid{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="banner"><h1>🎯 PRECISION TIMING PLANNER V29</h1></div>
+
+<div class="card top">
+<div class="topbox"><h3>Local Time</h3><div id="local"></div></div>
+<div class="topbox"><h3>UTC Time</h3><div id="utc"></div></div>
+<div class="topbox"><h3>UTC Reset</h3><div id="reset"></div></div>
+</div>
+
+<div class="card">
+<h2>🕚 Duration</h2>
+<div class="compactGrid">
+<div><div>Days</div><div class="compactControls"><button class="miniBtn" onclick="chg('days',-1)">-</button><input id="daysView" class="miniInput" type="number" value="0" min="0"><button class="miniBtn" onclick="chg('days',1)">+</button></div></div>
+<div><div>Hours</div><div class="compactControls"><button class="miniBtn" onclick="chg('hours',-1)">-</button><input id="hoursView" class="miniInput" type="number" value="0" min="0"><button class="miniBtn" onclick="chg('hours',1)">+</button></div></div>
+<div><div>Minutes</div><div class="compactControls"><button class="miniBtn" onclick="chg('minutes',-1)">-</button><input id="minutesView" class="miniInput" type="number" value="0" min="0"><button class="miniBtn" onclick="chg('minutes',1)">+</button></div></div>
+<div><div>Seconds</div><div class="compactControls"><button class="miniBtn" onclick="chg('seconds',-1)">-</button><input id="secondsView" class="miniInput" type="number" value="0" min="0"><button class="miniBtn" onclick="chg('seconds',1)">+</button></div></div>
+</div>
+</div>
+
+<div class="card">
+<h2>🎯 Desired Landing Date & Time</h2>
+<input id="landingDate" type="date">
+<input id="landingTime" type="time" value="00:00">
+<div style="margin-top:10px">
+<button id="todayBtn" class="quickBtn">TODAY</button>
+<button id="tomorrowBtn" class="quickBtn">TOMORROW</button>
+</div>
+<div class="toggle">
+🌎 Results Time Mode<br>
+<button id="localBtn" class="active" onclick="setMode('local')">LOCAL</button>
+<button id="utcBtn" class="inactive" onclick="setMode('utc')">UTC</button>
+</div>
+</div>
+
+<div class="results">
+<div class="card"><div class="panel"><h2>🟢 IF YOU START NOW</h2><div>Start Time</div><div id="startNow"></div><br><div>Finish Time</div><div id="finishNow"></div></div></div>
+<div class="card"><div class="panel"><h2>🎯 LANDING PLANNER</h2><div>Desired Landing</div><div id="desired">-</div><br><div>Required Start Time</div><div id="required">-</div><br><div>Time Until Start</div><div id="until">-</div><div id="status" class="status">🚀 START NOW</div></div></div>
+</div>
+</div>
+
+<script>
+let mode="local";
+function setMode(m){mode=m;localBtn.className=m==="local"?"active":"inactive";utcBtn.className=m==="utc"?"active":"inactive";calc();}
+function fmt(d){return mode==="utc"?d.toUTCString():d.toLocaleString();}
+function val(id){return parseInt(document.getElementById(id).value)||0;}
+function chg(n,a){const el=document.getElementById(n+"View");el.value=Math.max(0,(parseInt(el.value)||0)+a);calc();}
+function setToday(){const d=new Date();landingDate.value=d.toISOString().split("T")[0];calc();}
+function setTomorrow(){const d=new Date();d.setDate(d.getDate()+1);landingDate.value=d.toISOString().split("T")[0];calc();}
+
+function calc(){
+ const now=new Date();
+ local.textContent=now.toLocaleString();
+ utc.textContent=now.toUTCString();
+
+ const nextReset=new Date();
+ nextReset.setUTCHours(24,0,0,0);
+ const diffReset=nextReset-now;
+ reset.textContent=`${Math.floor(diffReset/3600000)}h ${Math.floor((diffReset%3600000)/60000)}m ${Math.floor((diffReset%60000)/1000)}s`;
+
+ const durationMs=((val("daysView")*86400)+(val("hoursView")*3600)+(val("minutesView")*60)+val("secondsView"))*1000;
+
+ startNow.textContent=fmt(now);
+ finishNow.textContent=fmt(new Date(now.getTime()+durationMs));
+
+ if(landingDate.value){
+   const target=new Date(landingDate.value+"T"+(landingTime.value||"00:00")+":00");
+   desired.textContent=fmt(target);
+
+   const requiredStart=new Date(target.getTime()-durationMs);
+   required.textContent=fmt(requiredStart);
+
+   const diff=requiredStart.getTime()-now.getTime();
+   const s=Math.max(0,Math.floor(diff/1000));
+
+   until.textContent=`${Math.floor(s/86400)}d ${Math.floor((s%86400)/3600)}h ${Math.floor((s%3600)/60)}m ${s%60}s`;
+
+   if(s===0){
+      status.style.display="block";
+      status.textContent="🚀 START NOW";
+      status.style.background="#22C55E";
+      status.style.color="#04150A";
+   }else{
+      status.style.display="none";
+   }
+ }
+}
+
+document.addEventListener("DOMContentLoaded",function(){
+ document.querySelectorAll("input").forEach(el=>el.addEventListener("input",calc));
+ todayBtn.addEventListener("click",setToday);
+ tomorrowBtn.addEventListener("click",setTomorrow);
+ calc();
+ setInterval(calc,1000);
+});
+</script>
+</body>
+</html>
